@@ -1,72 +1,46 @@
-import os
-import openai
 from crewai.agent import Agent
-import requests
+import openai
+import os
 
-# Set OpenAI API Key from environment variables
+# Set OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 class ResearcherAgent(Agent):
     def __init__(self):
-        super().__init__("ResearcherAgent", "An AI researcher agent to analyze stock data.")
+        # No additional arguments passed to super().__init__()
+        super().__init__()
 
     def handle_task(self, task_input):
-        stock_ticker = task_input.get("stock_ticker", "")
+        stock_symbol = task_input.get("stock_symbol", "")
 
-        # Validate input
-        if not stock_ticker:
-            return "Error: Stock ticker is required."
+        if not stock_symbol:
+            return "Error: No stock symbol provided."
 
-        # Fetch Finnhub API Key from environment
-        finnhub_api_key = os.getenv("FINNHUB_API_KEY")
-        if not finnhub_api_key:
-            return "Error: Finnhub API Key is missing in environment variables."
-
-        # Fetch stock data
-        stock_data = self.fetch_stock_data(stock_ticker, finnhub_api_key)
-        if not stock_data:
-            return f"Error: Failed to fetch data for stock {stock_ticker}."
-
-        # Generate stock news
-        stock_news = self.fetch_stock_news(stock_ticker)
-
-        # Combine the results
-        return {
-            "stock_data": stock_data,
-            "news": stock_news,
-        }
-
-    def fetch_stock_data(self, stock_ticker, api_key):
-        url = f"https://finnhub.io/api/v1/quote?symbol={stock_ticker}&token={api_key}"
+        # Fetch stock data using Finnhub API
         try:
-            response = requests.get(url)
-            response.raise_for_status()
-            data = response.json()
+            finn_token = os.getenv("FINNHUB_API_KEY")
+            finnhub_url = f"https://finnhub.io/api/v1/quote?symbol={stock_symbol}&token={finn_token}"
+            response = requests.get(finnhub_url)
+            stock_data = response.json()
 
-            return {
-                "current_price": data.get("c"),
-                "high_price": data.get("h"),
-                "low_price": data.get("l"),
-                "open_price": data.get("o"),
-                "previous_close": data.get("pc"),
-            }
-        except Exception as e:
-            print(f"Error fetching stock data: {e}")
-            return None
+            # Format the stock data
+            stock_info = f"Stock: {stock_symbol}\n"
+            stock_info += f"Current Price: {stock_data.get('c', 'N/A')}\n"
+            stock_info += f"High: {stock_data.get('h', 'N/A')}\n"
+            stock_info += f"Low: {stock_data.get('l', 'N/A')}\n"
+            stock_info += f"Open: {stock_data.get('o', 'N/A')}\n"
+            stock_info += f"Previous Close: {stock_data.get('pc', 'N/A')}\n"
 
-    def fetch_stock_news(self, stock_ticker):
-        # Example: Use OpenAI to "scour" the web
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are an expert financial analyst."},
-                    {"role": "user", "content": f"Find recent news and events about the stock {stock_ticker}."},
-                ],
-                max_tokens=500,
-                temperature=0.7,
-            )
-            return response["choices"][0]["message"]["content"]
+            return stock_info
         except Exception as e:
-            print(f"Error fetching stock news: {e}")
-            return "Unable to fetch news at the moment."
+            return f"Error fetching stock data: {str(e)}"
+
+    def analyze_news(self, stock_symbol):
+        # Simulated function for gathering news
+        return f"News for {stock_symbol}: Simulated news content."
+
+# Example usage
+if __name__ == "__main__":
+    researcher = ResearcherAgent()
+    task_input = {"stock_symbol": "AAPL"}
+    print(researcher.handle_task(task_input))
