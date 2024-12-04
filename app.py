@@ -1,31 +1,23 @@
-from flask import Flask, request, jsonify
-from agents import Researcher, Accountant, Recommender, Blogger
+from flask import Flask, jsonify, request
+from researcher import ResearcherAgent
 
 app = Flask(__name__)
+researcher_agent = ResearcherAgent()
 
-@app.route('/recommend', methods=['POST'])
-def recommend():
-    data = request.json  # Expect payload with stock symbol, name, etc.
+@app.route('/research', methods=['POST'])
+def research():
+    try:
+        data = request.json
+        stock_ticker = data.get("stock_ticker", "")
 
-    # Extract inputs
-    stock_symbol = data.get('symbol')
-    stock_name = data.get('name')
+        if not stock_ticker:
+            return jsonify({"error": "Stock ticker is required."}), 400
 
-    # Run agents
-    researcher = Researcher(stock_symbol, stock_name)
-    research_data = researcher.get_data()
+        # Call the ResearcherAgent
+        result = researcher_agent.handle_task({"stock_ticker": stock_ticker})
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
-    accountant = Accountant(research_data)
-    ratios = accountant.calculate_ratios()
-
-    recommender = Recommender(research_data, ratios)
-    decision = recommender.make_decision()
-
-    blogger = Blogger(research_data, ratios, decision)
-    report = blogger.format_report()
-
-    # Return recommendation and report
-    return jsonify({
-        "recommendation": decision,
-        "report": report
-    })
+if __name__ == "__main__":
+    app.run(debug=True)
