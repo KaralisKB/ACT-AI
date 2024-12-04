@@ -16,29 +16,26 @@ class ResearcherAgent(Agent):
         )
 
     def handle_task(self, task_input):
-        stock_symbol = task_input.get("stock_symbol", "")
+    stock_ticker = task_input.get("stock_ticker", "")
 
-        if not stock_symbol:
-            return "Error: No stock symbol provided."
+    if not stock_ticker:
+        return "Error: No stock symbol provided."
 
-        # Fetch stock data using Finnhub API
-        try:
-            finn_token = os.getenv("FINNHUB_API_KEY")
-            finnhub_url = f"https://finnhub.io/api/v1/quote?symbol={stock_symbol}&token={finn_token}"
-            response = requests.get(finnhub_url)
-            stock_data = response.json()
+    # Example research logic (you can replace this with your actual logic)
+    try:
+        # Fetch stock data from Finnhub
+        stock_data = self.fetch_stock_data(stock_ticker)
 
-            # Format the stock data
-            stock_info = f"Stock: {stock_symbol}\n"
-            stock_info += f"Current Price: {stock_data.get('c', 'N/A')}\n"
-            stock_info += f"High: {stock_data.get('h', 'N/A')}\n"
-            stock_info += f"Low: {stock_data.get('l', 'N/A')}\n"
-            stock_info += f"Open: {stock_data.get('o', 'N/A')}\n"
-            stock_info += f"Previous Close: {stock_data.get('pc', 'N/A')}\n"
+        # Simulate generating a response (modify as needed)
+        response = {
+            "stock_ticker": stock_ticker,
+            "current_price": stock_data.get("current_price", "Unknown"),
+            "news": stock_data.get("news", [])
+        }
+        return response
+    except Exception as e:
+        return f"Error processing the stock research: {str(e)}"
 
-            return stock_info
-        except Exception as e:
-            return f"Error fetching stock data: {str(e)}"
 
     def analyze_news(self, stock_symbol):
         # Simulated function for gathering news
