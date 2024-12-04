@@ -1,5 +1,5 @@
 Flask==2.3.2
 crewai==0.1.6
-openai==0.27.10
+openai==0.28.1
 requests==2.31.0
 python-dotenv==1.0.0
