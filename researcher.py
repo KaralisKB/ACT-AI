@@ -16,25 +16,25 @@ class ResearcherAgent(Agent):
         )
 
     def handle_task(self, task_input):
-    stock_ticker = task_input.get("stock_ticker", "")
+        stock_ticker = task_input.get("stock_ticker", "")
 
-    if not stock_ticker:
-        return "Error: No stock symbol provided."
+        if not stock_ticker:
+            return "Error: No stock symbol provided."
 
-    # Example research logic (you can replace this with your actual logic)
-    try:
-        # Fetch stock data from Finnhub
-        stock_data = self.fetch_stock_data(stock_ticker)
+        # Example research logic (you can replace this with your actual logic)
+        try:
+            # Fetch stock data from Finnhub
+            stock_data = self.fetch_stock_data(stock_ticker)
 
         # Simulate generating a response (modify as needed)
-        response = {
-            "stock_ticker": stock_ticker,
-            "current_price": stock_data.get("current_price", "Unknown"),
-            "news": stock_data.get("news", [])
-        }
-        return response
-    except Exception as e:
-        return f"Error processing the stock research: {str(e)}"
+            response = {
+                "stock_ticker": stock_ticker,
+                "current_price": stock_data.get("current_price", "Unknown"),
+                "news": stock_data.get("news", [])
+            }
+            return response
+        except Exception as e:
+            return f"Error processing the stock research: {str(e)}"
 
 
     def analyze_news(self, stock_symbol):
