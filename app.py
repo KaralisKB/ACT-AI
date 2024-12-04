@@ -1,14 +1,13 @@
-from flask import Flask, request, jsonify
-from agents import Researcher, Accountant, Recommender, Blogger
+from flask import Flask, jsonify, request
+from researcher import ResearcherAgent
 
 app = Flask(__name__)
+researcher_agent = ResearcherAgent()
 
 @app.route('/research', methods=['POST'])
 def research():
     try:
-        print("Request received")  # Add this log
         data = request.json
-        print("Request data:", data)  # Log request data
         stock_ticker = data.get("stock_ticker", "")
 
         if not stock_ticker:
@@ -16,8 +15,8 @@ def research():
 
         # Call the ResearcherAgent
         result = researcher_agent.handle_task({"stock_ticker": stock_ticker})
-        print("Research result:", result)  # Log result
         return jsonify(result)
     except Exception as e:
-        print("Error occurred:", str(e))  # Log error
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+# Note: Do NOT include app.run() for production.
