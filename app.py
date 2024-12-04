@@ -19,4 +19,4 @@ def research():
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
-# Note: Do NOT include app.run() for production.
+
