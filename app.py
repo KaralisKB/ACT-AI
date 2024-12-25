@@ -1,12 +1,15 @@
 from flask import Flask, jsonify, request
 from researcher import ResearcherAgent
-from accountant import AccountantAgent
+import requests
+import os
 
 app = Flask(__name__)
 
-# Initialize agents
+# Initialize ResearcherAgent
 researcher_agent = ResearcherAgent()
-accountant_agent = AccountantAgent()
+
+# Load the ngrok URL for the local Accountant agent
+ACCOUNTANT_NGROK_URL = os.getenv("ACCOUNTANT_NGROK_URL")  # Ensure this environment variable is set
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -26,10 +29,16 @@ def analyze():
         if "error" in researcher_result:
             return jsonify({"error": f"Researcher Agent Error: {researcher_result['error']}"}), 500
 
-        # Step 2: Use the AccountantAgent to calculate ratios and generate insights
-        accountant_result = accountant_agent.handle_task(researcher_result)
-        if "error" in accountant_result:
-            return jsonify({"error": f"Accountant Agent Error: {accountant_result['error']}"}), 500
+        # Step 2: Send ResearcherAgent result to local AccountantAgent via ngrok
+        accountant_url = f"{ACCOUNTANT_NGROK_URL}/accountant"
+        try:
+            accountant_response = requests.post(accountant_url, json={"financial_data": researcher_result})
+            if accountant_response.status_code != 200:
+                return jsonify({"error": f"Accountant Agent Error: {accountant_response.text}"}), 500
+
+            accountant_result = accountant_response.json()
+        except requests.exceptions.RequestException as e:
+            return jsonify({"error": f"Failed to reach Accountant Agent: {str(e)}"}), 500
 
         # Combine results from both agents
         combined_result = {
