@@ -10,11 +10,18 @@ class AccountantAgent(Agent):
             goal="Perform advanced financial calculations and provide insights using AI.",
             backstory="An AI financial analyst powered by GPT-2 for stock-related computations."
         )
-        # Load the GPT-2 model and tokenizer
-        self.model_name = "gpt2"
-        self.tokenizer = GPT2Tokenizer.from_pretrained(self.model_name)
-        self.model = GPT2LMHeadModel.from_pretrained(self.model_name)
-        self.generator = pipeline("text-generation", model=self.model, tokenizer=self.tokenizer)
+        # Initialize GPT-2 model outside the strict attribute system
+        self._initialize_model()
+
+    def _initialize_model(self):
+        """
+        Load GPT-2 model and tokenizer.
+        """
+        self.generator = pipeline(
+            "text-generation",
+            model=GPT2LMHeadModel.from_pretrained("gpt2"),
+            tokenizer=GPT2Tokenizer.from_pretrained("gpt2"),
+        )
 
     def handle_task(self, researcher_data):
         try:
