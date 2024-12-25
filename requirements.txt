@@ -3,6 +3,5 @@ crewai==0.1.6
 openai==0.28.1
 requests==2.31.0
 python-dotenv==1.0.0
-gunicorn==20.1.0
+transformers==4.34.0
 torch==2.0.1
-transformers==4.35.0

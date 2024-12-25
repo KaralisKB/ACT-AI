@@ -1,91 +1,95 @@
-from crewai.agent import Agent
-from transformers import pipeline, GPT2Tokenizer, GPT2LMHeadModel
-import os
-import json
+from transformers import pipeline
+import math
 
-class AccountantAgent(Agent):
+class AccountantAgent:
     def __init__(self):
-        super().__init__(
-            role="Accountant",
-            goal="Perform advanced financial calculations and provide insights using AI.",
-            backstory="An AI financial analyst powered by GPT-2 for stock-related computations."
-        )
-        # Initialize GPT-2 model outside the strict attribute system
-        self._initialize_model()
-
-    def _initialize_model(self):
+        # Load DistilGPT-2 model for reasoning and explanations
+        self.ai_model = pipeline("text-generation", model="distilgpt2")
+    
+    def calculate_ratios(self, financial_data):
         """
-        Load GPT-2 model and tokenizer.
+        Perform comprehensive accounting calculations using Python.
         """
-        self.generator = pipeline(
-            "text-generation",
-            model=GPT2LMHeadModel.from_pretrained("gpt2"),
-            tokenizer=GPT2Tokenizer.from_pretrained("gpt2"),
-        )
-
-    def handle_task(self, researcher_data):
         try:
-            financials = researcher_data.get("financial_data", {})
-            stock_ticker = researcher_data.get("stock_ticker", "Unknown Stock")
+            # Extract necessary fields from financial data
+            current_price = financial_data["current_price"]
+            previous_close = financial_data.get("previous_close", 0)
+            eps = financial_data.get("eps", 0)  # Earnings per share
+            market_cap = financial_data.get("market_cap", 0)
+            dividend_yield = financial_data.get("dividend_yield", 0)
+            pe_ratio = financial_data.get("pe_ratio", None)
+            open_price = financial_data.get("open_price", 0)
+            high_price = financial_data.get("high_price", 0)
+            low_price = financial_data.get("low_price", 0)
+            week_52_high = financial_data.get("52_week_high", 0)
+            week_52_low = financial_data.get("52_week_low", 0)
 
-            if not financials:
-                return {"error": "No financial data provided by the researcher."}
-
-            # Prepare the input prompt for GPT-2
-            prompt = self.construct_prompt(stock_ticker, financials)
-
-            # Use GPT-2 to generate results
-            results = self.generate_analysis(prompt)
-
-            # Process the results (e.g., clean up text output)
-            processed_results = self.process_results(results)
+            # Calculations
+            if eps > 0 and not pe_ratio:
+                pe_ratio = round(current_price / eps, 2)  # Price-to-Earnings ratio
+            
+            dividend_percentage = round(dividend_yield * 100, 2) if dividend_yield else None
+            price_change = round(current_price - previous_close, 2)  # Absolute price change
+            price_change_percent = (
+                round((price_change / previous_close) * 100, 2) if previous_close > 0 else None
+            )
+            volatility = round(high_price - low_price, 2)  # Daily price range
+            price_to_book = (
+                round(market_cap / (eps * 1_000_000), 2) if eps > 0 else None  # Simplified price-to-book ratio
+            )
+            price_vs_52_high = round(((week_52_high - current_price) / week_52_high) * 100, 2) if week_52_high > 0 else None
+            price_vs_52_low = round(((current_price - week_52_low) / week_52_low) * 100, 2) if week_52_low > 0 else None
 
             return {
-                "stock_ticker": stock_ticker,
-                "analysis": processed_results
+                "pe_ratio": pe_ratio,
+                "dividend_yield_percent": dividend_percentage,
+                "price_change": price_change,
+                "price_change_percent": price_change_percent,
+                "volatility": volatility,
+                "price_to_book_ratio": price_to_book,
+                "price_vs_52_week_high_percent": price_vs_52_high,
+                "price_vs_52_week_low_percent": price_vs_52_low,
             }
-        except Exception as e:
-            return {"error": f"Error processing AccountantAgent task: {str(e)}"}
+        except KeyError as e:
+            raise ValueError(f"Missing required financial data field: {str(e)}")
 
-    def construct_prompt(self, stock_ticker, financials):
+    def ai_insights(self, financial_data, ratios):
         """
-        Construct the input prompt for GPT-2 based on the financial data.
+        Use DistilGPT-2 to generate textual insights based on financial calculations.
         """
-        financial_data_summary = json.dumps(financials, indent=2)
         prompt = (
-            f"You are an AI accountant analyzing financial data for the stock {stock_ticker}. "
-            "Using the provided financial data, calculate the following:\n"
-            "1. Profitability Ratios: Gross Margin, Operating Margin, Net Margin.\n"
-            "2. Liquidity Ratios: Current Ratio, Quick Ratio.\n"
-            "3. Risk Metrics: Debt-to-Equity Ratio, Beta.\n"
-            "4. Provide a short textual analysis of the company's financial health.\n\n"
-            f"Financial Data:\n{financial_data_summary}\n\n"
-            "Your analysis:"
+            f"Analyze the following financial metrics: "
+            f"PE Ratio: {ratios['pe_ratio']}, Dividend Yield: {ratios['dividend_yield_percent']}%, "
+            f"Price Change: {ratios['price_change']} ({ratios['price_change_percent']}%), "
+            f"Volatility: {ratios['volatility']}, Price-to-Book Ratio: {ratios['price_to_book_ratio']}, "
+            f"Price vs 52-Week High: {ratios['price_vs_52_week_high_percent']}%, "
+            f"Price vs 52-Week Low: {ratios['price_vs_52_week_low_percent']}%. "
+            f"Evaluate if this stock is suitable for investment."
         )
-        return prompt
+        
+        # Generate textual insights
+        ai_response = self.ai_model(prompt, max_length=150, num_return_sequences=1)
+        return ai_response[0]["generated_text"]
 
-    def generate_analysis(self, prompt):
+    def handle_task(self, task_input):
         """
-        Use GPT-2 to generate financial analysis based on the input prompt.
+        Main function to handle incoming tasks.
         """
+        financial_data = task_input.get("financial_data", {})
+        if not financial_data:
+            return {"error": "Financial data is required."}
+
+        # Step 1: Perform calculations using Python
         try:
-            generated = self.generator(
-                prompt,
-                max_length=512,
-                num_return_sequences=1,
-                temperature=0.7,
-                top_k=50,
-                top_p=0.9,
-            )
-            return generated[0]["generated_text"]
-        except Exception as e:
-            raise RuntimeError(f"Error generating analysis with GPT-2: {str(e)}")
+            ratios = self.calculate_ratios(financial_data)
+        except ValueError as e:
+            return {"error": str(e)}
+        
+        # Step 2: Generate insights using DistilGPT-2
+        ai_generated_insights = self.ai_insights(financial_data, ratios)
 
-    def process_results(self, results):
-        """
-        Process and format the GPT-2 output for readability.
-        """
-        # Extract and clean up the GPT-2-generated output
-        if isinstance(results, str):
-            return results.strip()
-        return "No valid analysis generated."
+        # Step 3: Combine results into a unified response
+        return {
+            "ratios": ratios,
+            "ai_insights": ai_generated_insights
+        }
