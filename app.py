@@ -37,7 +37,7 @@ def analyze():
             accountant_response = requests.post(
                 accountant_url,
                 json={"financial_data": researcher_result["financial_data"]},  # Send only financial_data
-                timeout=10
+                timeout=30
             )
             if accountant_response.status_code != 200:
                 return jsonify({"error": f"Accountant Agent Error: {accountant_response.text}"}), 500
