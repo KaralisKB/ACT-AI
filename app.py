@@ -1,12 +1,14 @@
 from flask import Flask, jsonify, request
 from researcher import ResearcherAgent
+from recommender import RecommenderAgent
 import requests
 import os
 
 app = Flask(__name__)
 
-# Initialize ResearcherAgent
+# Initialize agents
 researcher_agent = ResearcherAgent()
+recommender_agent = RecommenderAgent()
 
 # Load the ngrok URL for the local Accountant agent
 ACCOUNTANT_NGROK_URL = os.getenv("ACCOUNTANT_NGROK_URL")  # Ensure this environment variable is set
@@ -46,10 +48,16 @@ def analyze():
         except requests.exceptions.RequestException as e:
             return jsonify({"error": f"Failed to reach Accountant Agent: {str(e)}"}), 500
 
-        # Combine results from both agents
+        # Step 3: Use the RecommenderAgent to make a recommendation
+        recommender_result = recommender_agent.handle_task(researcher_result, accountant_result)
+        if "error" in recommender_result:
+            return jsonify({"error": f"Recommender Agent Error: {recommender_result['error']}"}), 500
+
+        # Combine results from all agents
         combined_result = {
             "researcher_data": researcher_result,
-            "accountant_analysis": accountant_result
+            "accountant_analysis": accountant_result,
+            "recommendation": recommender_result.get("recommendation", "No recommendation provided")
         }
 
         return jsonify(combined_result)
