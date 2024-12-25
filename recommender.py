@@ -30,11 +30,12 @@ class RecommenderAgent:
     def build_prompt(self, financial_data, calculations, news_articles):
         # Craft a detailed and structured prompt with data provided
         news_summary = "\n".join(
-            [
-                f"- {article['headline']} (Source: {article['source']}): {article['summary']}"
-                for article in news_articles
-            ]
-        )
+    [
+        f"- {article['headline']} (Source: {article['source']}): {article['summary']}"
+        for article in news_articles[:3]  # Limit to 3 articles
+    ]
+)
+
 
         prompt = f"""
         Analyze the following stock data and news to determine whether to Buy, Hold, or Sell. Provide clear reasoning and highlight key factors.
@@ -71,7 +72,7 @@ class RecommenderAgent:
         }
         payload = {
             "prompt": prompt,
-            "max_tokens": 300,
+            "max_tokens": 200,
             "temperature": 0.7,
             "top_p": 0.9,
             "frequency_penalty": 0.0,
