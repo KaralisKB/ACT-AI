@@ -14,6 +14,7 @@ class RecommenderAgent:
 
         # Build the prompt for the LLM
         prompt = self.build_prompt(financial_data, calculations, news_articles)
+        print("Generated Prompt:", prompt)  # Debugging: Print the prompt to verify its structure
 
         # Send the request to Goose.ai
         try:
@@ -27,7 +28,7 @@ class RecommenderAgent:
             return {"error": f"Failed to connect to Goose.ai: {str(e)}"}
 
     def build_prompt(self, financial_data, calculations, news_articles):
-        # Craft a detailed prompt with data provided
+        # Craft a detailed and structured prompt with data provided
         news_summary = "\n".join(
             [
                 f"- {article['headline']} (Source: {article['source']}): {article['summary']}"
@@ -36,9 +37,9 @@ class RecommenderAgent:
         )
 
         prompt = f"""
-        Based on the following financial data, analysis, and recent news articles, provide a recommendation to buy, sell, or hold the stock. Include reasoning behind the recommendation:
+        Analyze the following stock data and news to determine whether to Buy, Hold, or Sell. Provide clear reasoning and highlight key factors.
 
-        Financial Data:
+        **Financial Data**:
         - Company Name: {financial_data.get('company_name', 'N/A')}
         - Industry: {financial_data.get('industry', 'N/A')}
         - Current Price: {financial_data.get('current_price', 'N/A')}
@@ -48,17 +49,18 @@ class RecommenderAgent:
         - PE Ratio: {financial_data.get('pe_ratio', 'N/A')}
         - Dividend Yield: {financial_data.get('dividend_yield', 'N/A')}
 
-        Analysis:
+        **Analysis**:
         - Price-to-Earnings Ratio: {calculations.get('PE_ratio', 'N/A')}
         - Dividend Payout Ratio: {calculations.get('Dividend_payout_ratio', 'N/A')}
         - Growth Rate: {calculations.get('Growth_rate', 'N/A')}
         - Price-to-Book Ratio: {calculations.get('Price_to_book_ratio', 'N/A')}
         - Debt-to-Equity Ratio: {calculations.get('Debt_to_equity_ratio', 'N/A')}
 
-        Recent News Articles:
+        **Recent News**:
         {news_summary}
 
-        Recommendation:
+        **Recommendation**:
+        Provide a detailed analysis and specify whether the stock is a Buy, Hold, or Sell. Explain your reasoning.
         """
         return prompt
 
@@ -75,5 +77,6 @@ class RecommenderAgent:
             "frequency_penalty": 0.0,
             "presence_penalty": 0.0
         }
-        response = requests.post(self.api_url, json=payload, headers=headers)
+        print("API Payload:", payload)  # Debugging: Print the payload being sent to the API
+        response = requests.post(self.api_url, json=payload, headers=headers, timeout=60)  # Added a 60-second timeout
         return response
