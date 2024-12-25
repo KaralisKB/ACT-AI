@@ -34,7 +34,11 @@ def analyze():
         # Step 2: Send ResearcherAgent result to local AccountantAgent via ngrok
         accountant_url = f"{ACCOUNTANT_NGROK_URL}/accountant"
         try:
-            accountant_response = requests.post(accountant_url, json={"financial_data": researcher_result})
+            accountant_response = requests.post(
+                accountant_url,
+                json={"financial_data": researcher_result["financial_data"]},  # Send only financial_data
+                timeout=10
+            )
             if accountant_response.status_code != 200:
                 return jsonify({"error": f"Accountant Agent Error: {accountant_response.text}"}), 500
 
