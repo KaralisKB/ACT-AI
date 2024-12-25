@@ -29,6 +29,8 @@ def analyze():
         if "error" in researcher_result:
             return jsonify({"error": f"Researcher Agent Error: {researcher_result['error']}"}), 500
 
+        print("Payload sent to Accountant Agent:", researcher_result["financial_data"])
+
         # Step 2: Send ResearcherAgent result to local AccountantAgent via ngrok
         accountant_url = f"{ACCOUNTANT_NGROK_URL}/accountant"
         try:
