@@ -1,17 +1,6 @@
-# Flask for API endpoints
 Flask==2.3.2
-
-# OpenAI API for the Researcher agent
-openai==0.28.0
-
-# Requests library for handling HTTP requests
 requests==2.31.0
-
-# Environment variable management
 python-dotenv==1.0.0
-
-# Gunicorn for production server
 gunicorn==20.1.0
-
-
 crewai==0.1.6
+openai==0.28.1
