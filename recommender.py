@@ -1,10 +1,13 @@
 import os
-import requests
+import openai
 
 class RecommenderAgent:
     def __init__(self):
-        self.api_key = os.getenv("GOOSEAI_API_KEY")  # Ensure this environment variable is set
-        self.api_url = "https://api.goose.ai/v1/engines/fairseq-13b/completions"  # Change to your preferred engine
+        # Set up GooseAI API key and endpoint
+        self.api_key = os.getenv("GOOSEAI_API_KEY")  # Ensure this is set in your environment
+        self.api_url = "https://api.goose.ai/v1"  # GooseAI's base URL for the OpenAI client
+        openai.api_key = self.api_key
+        openai.api_base = self.api_url
 
     def handle_task(self, researcher_data, accountant_data):
         # Combine data from researcher and accountant
@@ -16,26 +19,22 @@ class RecommenderAgent:
         prompt = self.build_prompt(financial_data, calculations, news_articles)
         print("Generated Prompt:", prompt)  # Debugging: Print the prompt to verify its structure
 
-        # Send the request to Goose.ai
+        # Use OpenAI client to generate response
         try:
             response = self.generate_response(prompt)
-            if response.status_code != 200:
-                return {"error": f"API Error: {response.text}"}
-
-            recommendation = response.json().get("choices", [{}])[0].get("text", "").strip()
+            recommendation = response.choices[0].text.strip()
             return {"recommendation": recommendation}
-        except requests.exceptions.RequestException as e:
-            return {"error": f"Failed to connect to Goose.ai: {str(e)}"}
+        except Exception as e:
+            return {"error": f"Failed to generate recommendation: {str(e)}"}
 
     def build_prompt(self, financial_data, calculations, news_articles):
         # Craft a detailed and structured prompt with data provided
         news_summary = "\n".join(
-    [
-        f"- {article['headline']} (Source: {article['source']}): {article['summary']}"
-        for article in news_articles[:3]  # Limit to 3 articles
-    ]
-)
-
+            [
+                f"- {article['headline']} (Source: {article['source']}): {article['summary']}"
+                for article in news_articles[:3]  # Limit to 3 articles
+            ]
+        )
 
         prompt = f"""
         Analyze the following stock data and news to determine whether to Buy, Hold, or Sell. Provide clear reasoning and highlight key factors.
@@ -66,18 +65,14 @@ class RecommenderAgent:
         return prompt
 
     def generate_response(self, prompt):
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "prompt": prompt,
-            "max_tokens": 200,
-            "temperature": 0.7,
-            "top_p": 0.9,
-            "frequency_penalty": 0.0,
-            "presence_penalty": 0.0
-        }
-        print("API Payload:", payload)  # Debugging: Print the payload being sent to the API
-        response = requests.post(self.api_url, json=payload, headers=headers, timeout=120)  # Added a 60-second timeout
+        # Use OpenAI client to make the API call
+        response = openai.Completion.create(
+            engine="fairseq-13b",  # Change to your preferred engine
+            prompt=prompt,
+            max_tokens=200,
+            temperature=0.7,
+            top_p=0.9,
+            frequency_penalty=0.0,
+            presence_penalty=0.0
+        )
         return response
