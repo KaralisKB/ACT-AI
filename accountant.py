@@ -2,12 +2,10 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from crewai.agent import Agent
 import torch
 
-
-# Load model and tokenizer globally (caches the model at startup)
+# Cache model and tokenizer globally
 MODEL_NAME = "distilgpt2"
-model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-
+MODEL = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+TOKENIZER = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 class AccountantAgent(Agent):
     def __init__(self):
@@ -16,9 +14,6 @@ class AccountantAgent(Agent):
             goal="Analyze financial data and generate accounting insights.",
             backstory="A financial accountant AI assistant."
         )
-        # Use the preloaded model and tokenizer
-        self.model = model
-        self.tokenizer = tokenizer
 
     def handle_task(self, task_input):
         try:
@@ -83,18 +78,18 @@ class AccountantAgent(Agent):
         )
 
         # Tokenize input
-        input_ids = tokenizer.encode(input_text, return_tensors="pt")
+        input_ids = TOKENIZER.encode(input_text, return_tensors="pt")
 
         # Generate AI-based text
         with torch.no_grad():
-            output = self.model.generate(
+            output = MODEL.generate(
                 input_ids,
                 max_length=150,
                 num_return_sequences=1,
                 temperature=0.7,
-                pad_token_id=self.tokenizer.eos_token_id,
+                pad_token_id=TOKENIZER.eos_token_id,
             )
 
         # Decode the generated text
-        ai_analysis = tokenizer.decode(output[0], skip_special_tokens=True)
+        ai_analysis = TOKENIZER.decode(output[0], skip_special_tokens=True)
         return ai_analysis
