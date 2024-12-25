@@ -79,5 +79,5 @@ class RecommenderAgent:
             "presence_penalty": 0.0
         }
         print("API Payload:", payload)  # Debugging: Print the payload being sent to the API
-        response = requests.post(self.api_url, json=payload, headers=headers, timeout=60)  # Added a 60-second timeout
+        response = requests.post(self.api_url, json=payload, headers=headers, timeout=120)  # Added a 60-second timeout
         return response
