@@ -4,7 +4,7 @@ import requests
 class RecommenderAgent:
     def __init__(self):
         self.api_key = os.getenv("GOOSEAI_API_KEY")  # Ensure this environment variable is set
-        self.api_url = "https://api.goose.ai/v1/engines/gpt-neo-20b/completions"  # Change to your preferred engine
+        self.api_url = "https://api.goose.ai/v1/engines/fairseq-13b/completions"  # Change to your preferred engine
 
     def handle_task(self, researcher_data, accountant_data):
         # Combine data from researcher and accountant
