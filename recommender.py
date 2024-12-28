@@ -36,19 +36,21 @@ class RecommenderAgent(Agent):
             # Build the input prompt for Groq
             prompt = self.build_prompt(financial_data, calculations, news_articles)
 
-            # Send the request to Groq and process the response
+            # Query Groq and process the response
             response = self.query_groq(prompt)
-            if not response or "recommendation" not in response or "reasoning" not in response:
-                logger.error("Invalid response from Groq: Missing recommendation or reasoning.")
-                return {"error": "Groq API Error: Missing recommendation or reasoning in response."}
+            if not response or "error" in response:
+                return {"error": f"Groq API Error: {response.get('error', 'Unknown error')}"}
 
-            # Extract and return the recommendation
-            recommendation = response["recommendation"]
-            rationale = response["reasoning"]
-            logger.debug(f"Groq recommendation: {recommendation}, Rationale: {rationale}")
+            # Ensure the recommendation and reasoning are present and consistent
+            recommendation = response.get("recommendation", "").strip()
+            rationale = response.get("reasoning", "").strip()
+
+            if not recommendation or not rationale:
+                return {"error": "Missing recommendation or reasoning in Groq response."}
+
+            # Return only the relevant details
             return {"recommendation": recommendation, "rationale": rationale}
         except Exception as e:
-            logger.error(f"Recommender Agent Error: {str(e)}")
             return {"error": f"Recommender Agent Error: {str(e)}"}
 
     def build_prompt(self, financial_data, calculations, news_articles):
