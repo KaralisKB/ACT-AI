@@ -8,8 +8,8 @@ class RecommenderAgent(Agent):
             goal="Provide stock recommendations (Buy, Hold, Sell) based on financial data.",
             backstory="An AI agent that combines financial insights and market trends to give investment advice."
         )
-        # Initialize the Groq API key
-        self.groq_api_key = os.getenv("GROQ_API_KEY")
+        # Explicitly define groq_api_key to avoid ValueError
+        self.__dict__["groq_api_key"] = os.getenv("GROQ_API_KEY")
         if not self.groq_api_key:
             raise ValueError("GROQ_API_KEY is not set in the environment variables.")
 
