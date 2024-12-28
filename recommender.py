@@ -45,10 +45,7 @@ class RecommenderAgent(Agent):
             recommendation = response.get("recommendation", "").strip()
             reasoning = response.get("reasoning", "").strip()
 
-            if not recommendation or not reasoning:
-                return {"error": "Missing recommendation or reasoning in Groq response."}
-
-            # Validate the recommendation and reasoning alignment
+            # Validate alignment between recommendation and reasoning
             if "hold" in reasoning.lower() and recommendation.lower() != "hold":
                 recommendation = "Hold"
             elif "buy" in reasoning.lower() and recommendation.lower() != "buy":
@@ -61,6 +58,7 @@ class RecommenderAgent(Agent):
         except Exception as e:
             return {"error": f"Recommender Agent Error: {str(e)}"}
 
+
     def build_prompt(self, financial_data, calculations, news_articles):
         try:
             news_summary = "\n".join(
@@ -68,7 +66,7 @@ class RecommenderAgent(Agent):
             )
 
             prompt = f"""
-            Analyze the following financial data, calculations, and news to determine whether the stock is a Buy, Hold, or Sell:
+            You are a financial analyst. Based on the following data, provide a single **consistent** recommendation (Buy, Hold, Sell) and reasoning. The recommendation and reasoning must match.
 
             **Financial Data**:
             - Current Price: {financial_data.get('current_price', 'N/A')}
@@ -89,13 +87,16 @@ class RecommenderAgent(Agent):
             {news_summary}
 
             **Task**:
-            Based on the above data, provide a clear recommendation (Buy, Hold, or Sell) and explain your reasoning.
+            Based on the above data, provide:
+            1. A single recommendation: **Buy**, **Hold**, or **Sell**.
+            2. Consistent reasoning supporting this recommendation. Ensure the reasoning and recommendation match.
             """
-            logger.debug(f"Built prompt: {prompt[:500]}...")  # Log first 500 chars of prompt
+            logger.debug(f"Built prompt: {prompt[:500]}...")  # Log the prompt for debugging
             return prompt
         except Exception as e:
             logger.error(f"Error building prompt: {str(e)}")
             raise
+
 
     def query_groq(self, prompt, temperature=1.6):
         """
