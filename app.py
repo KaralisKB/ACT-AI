@@ -7,8 +7,6 @@ import os
 
 app = Flask(__name__)
 
-print("GROQ_API_KEY:", os.getenv("GROQ_API_KEY"))
-
 # Initialize agents
 researcher_agent = ResearcherAgent()
 recommender_agent = RecommenderAgent()

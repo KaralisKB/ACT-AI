@@ -1,14 +1,17 @@
 from crewai.agent import Agent
 import requests
+import os
+
+NGROK_URL = os.getenv("LOCAL_NGROK_URL")
 
 class CrewAIAccountantAgent(Agent):
-    def __init__(self, ngrok_url):
+    def __init__(self):
         super().__init__(
             role="Accountant",
             goal="Perform financial calculations and provide insights.",
             backstory="A financial expert AI agent capable of analyzing financial data and producing key metrics."
         )
-        self.ngrok_url = ngrok_url
+        
 
     def handle_task(self, task_input):
         financial_data = task_input.get("financial_data", {})
@@ -18,7 +21,7 @@ class CrewAIAccountantAgent(Agent):
         try:
             # Send data to the locally hosted Accountant API
             response = requests.post(
-                f"{self.ngrok_url}/accountant",
+                f"{ngrok_url}/accountant",
                 json={"financial_data": financial_data},
                 timeout=30
             )
