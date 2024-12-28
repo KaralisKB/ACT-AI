@@ -1,65 +1,50 @@
-from flask import Flask, jsonify, request
-from researcher import ResearcherAgent
+from flask import Flask, request, jsonify
 from recommender import RecommenderAgent
 from accountant import CrewAIAccountantAgent
 from blogger import CrewAIBloggerAgent
 import os
 
+# Initialize Flask app
 app = Flask(__name__)
 
 # Initialize agents
-researcher_agent = ResearcherAgent()
 recommender_agent = RecommenderAgent()
-ngrok_url = os.getenv("LOCAL_NGROK_URL")  # Shared ngrok URL for local models
 accountant_agent = CrewAIAccountantAgent()
 blogger_agent = CrewAIBloggerAgent()
 
-@app.route('/analyze', methods=['POST'])
-def analyze():
+@app.route("/recommend", methods=["POST"])
+def recommend():
     try:
-        data = request.json
+        # Parse input data
+        input_data = request.json
+        if not input_data:
+            return jsonify({"error": "No input data provided."}), 400
 
-        if not data:
-            return jsonify({"error": "Invalid or missing JSON payload."}), 400
+        # Step 1: Call the Accountant Agent
+        accountant_response = accountant_agent.handle_task({"financial_data": input_data.get("financial_data", {})})
+        if "error" in accountant_response:
+            return jsonify({"error": f"Accountant Agent Error: {accountant_response['error']}"}), 500
 
-        stock_ticker = data.get("stock_ticker", "")
-        if not stock_ticker:
-            return jsonify({"error": "Stock ticker is required."}), 400
+        # Step 2: Call the Recommender Agent
+        recommender_response = recommender_agent.handle_task(
+            researcher_data=input_data.get("researcher_data", {}),
+            accountant_data=accountant_response
+        )
+        if "error" in recommender_response:
+            return jsonify({"error": f"Recommender Agent Error: {recommender_response['error']}"}), 500
 
-        # Step 1: Use the Researcher Agent
-        researcher_result = researcher_agent.handle_task({"stock_ticker": stock_ticker})
-        if "error" in researcher_result:
-            return jsonify({"error": f"Researcher Agent Error: {researcher_result['error']}"}), 500
+        # Step 3: Call the Blogger Agent
+        blogger_response = blogger_agent.handle_task(recommender_response)
+        if "error" in blogger_response:
+            return jsonify({"error": f"Blogger Agent Error: {blogger_response['error']}"}), 500
 
-        # Step 2: Use the Accountant Agent
-        accountant_result = accountant_agent.handle_task({"financial_data": researcher_result["financial_data"]})
-        if "error" in accountant_result:
-            return jsonify({"error": f"Accountant Agent Error: {accountant_result['error']}"}), 500
+        # Return the final blog post
+        return jsonify(blogger_response), 200
 
-        # Step 3: Use the Recommender Agent
-        recommender_result = recommender_agent.handle_task(researcher_result, accountant_result)
-        if "error" in recommender_result:
-            return jsonify({"error": f"Recommender Agent Error: {recommender_result['error']}"}), 500
-
-        # Step 4: Use the Blogger Agent
-        blogger_result = blogger_agent.handle_task({
-            "recommendation": recommender_result.get("recommendation", ""),
-            "rationale": recommender_result.get("rationale", "")
-        })
-        if "error" in blogger_result:
-            return jsonify({"error": f"Blogger Agent Error: {blogger_result['error']}"}), 500
-
-        # Combine and send the final response
-        combined_result = {
-            "researcher_data": researcher_result,
-            "accountant_analysis": accountant_result,
-            "recommendation": recommender_result.get("recommendation", "No recommendation provided"),
-            "summary": blogger_result.get("summary", "No summary provided")
-        }
-
-        return jsonify(combined_result)
     except Exception as e:
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+        return jsonify({"error": f"Server Error: {str(e)}"}), 500
+
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Run the app (development server for testing purposes)
+    app.run(host="0.0.0.0", port=5000, debug=True)
