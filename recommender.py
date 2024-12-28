@@ -90,27 +90,15 @@ class RecommenderAgent(Agent):
             raise
 
     def query_groq(self, prompt):
-        """
-        Query Groq API to generate a recommendation based on the provided prompt.
-        """
         try:
-            logger.debug("Sending request to Groq API.")
-
-            # Call Groq's chat completion endpoint
+            logging.debug("Sending request to Groq API.")
             chat_completion = self.client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt,
-                    }
-                ],
-                model="llama3-8b-8192",  # Replace with your desired model name
+                messages=[{"role": "user", "content": prompt}],
+                model="llama3-8b-8192",
             )
-
-            # Extract the response
+            logging.debug(f"Groq API response: {chat_completion}")
             response_message = chat_completion.choices[0].message.content
-            logger.debug(f"Groq API response message: {response_message}")
             return {"recommendation": "Buy", "reasoning": response_message}
         except Exception as e:
-            logger.error(f"Failed to query Groq API: {str(e)}")
-            raise Exception(f"Failed to query Groq API: {str(e)}")
+            logging.error(f"Failed to query Groq API: {str(e)}")
+            return {"error": f"Failed to query Groq API: {str(e)}"}
