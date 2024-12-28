@@ -1,19 +1,18 @@
 from crewai.agent import Agent 
+import requests
+
+
+GROQ_API_KEY = "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"
 
 class RecommenderAgent(Agent):
+
     def __init__(self):
         super().__init__(
             role="Recommender",
             goal="Provide stock recommendations (Buy, Hold, Sell) based on financial data.",
             backstory="An AI agent that combines financial insights and market trends to give investment advice."
         )
-        groq_api_key = "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"
 
-        if not groq_api_key:
-            raise ValueError("GROQ_API_KEY is missing or invalid.")
-
-        # Assign the key to a variable inside the class for later use
-        self.groq_api_key = groq_api_key
 
     def handle_task(self, researcher_data, accountant_data):
         try:
@@ -74,12 +73,27 @@ class RecommenderAgent(Agent):
         """
         Query Groq API to generate a recommendation based on the provided prompt.
         """
+        # Define the Groq API endpoint (replace with the actual endpoint URL)
+        api_url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "prompt": prompt,
+            "max_tokens": 300,  # Adjust based on Groq's requirements
+            "temperature": 0.7,
+        }
+
         try:
-            # Example Groq API integration (replace with actual API call)
-            response = {
-                "recommendation": "Buy",
-                "reasoning": "The stock shows strong financial health, high growth potential, and favorable market trends."
-            }
-            return response
-        except Exception as e:
-            return {"error": f"Failed to query Groq API: {str(e)}"}
+            # Send the POST request to the Groq API
+            response = requests.post(api_url, headers=headers, json=payload, timeout=30)
+
+            # Raise an exception if the API call fails
+            response.raise_for_status()
+
+            # Parse and return the response JSON
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            # Handle any HTTP errors or connection issues
+            raise Exception(f"Failed to query Groq API: {str(e)}")
