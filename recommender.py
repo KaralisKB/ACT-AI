@@ -2,7 +2,7 @@ from crewai.agent import Agent
 from groq import Groq
 
 # Global API key for Groq
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "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"
 
 class RecommenderAgent(Agent):
     class Config:
