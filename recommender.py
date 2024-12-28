@@ -1,42 +1,49 @@
-import cohere
 import os
+from crewai.agent import Agent
 
-class RecommenderAgent:
+class RecommenderAgent(Agent):
     def __init__(self):
-        # Initialize Cohere with API key
-        self.api_key = os.getenv("COHERE_API_KEY")  # Set this environment variable
-        self.client = cohere.Client(self.api_key)
+        super().__init__(
+            role="Recommender",
+            goal="Analyze data and provide a Buy, Hold, or Sell recommendation.",
+            backstory="An AI agent designed to analyze financial and market data to assist investors in decision-making."
+        )
+        # Initialize Groq API (replace with actual initialization if applicable)
+        self.groq_api_key = os.getenv("GROQ_API_KEY")
 
     def handle_task(self, researcher_data, accountant_data):
-        # Combine data from researcher and accountant
-        financial_data = researcher_data.get("financial_data", {})
-        calculations = accountant_data.get("calculations", {})
-        news_articles = researcher_data.get("news", [])
-
-        # Build the prompt for the LLM
-        prompt = self.build_prompt(financial_data, calculations, news_articles)
-        print("[DEBUG] Generated Prompt:", prompt)  # Debug prompt
-
-        # Send the request to Cohere
         try:
-            response = self.generate_response(prompt)
-            return {"recommendation": response}
+            # Combine inputs from Researcher and Accountant agents
+            financial_data = researcher_data.get("financial_data", {})
+            calculations = accountant_data.get("calculations", {})
+            news_articles = researcher_data.get("news", [])
+
+            # Build the input prompt for Groq
+            prompt = self.build_prompt(financial_data, calculations, news_articles)
+
+            # Send the request to Groq (replace with actual Groq API call)
+            response = self.query_groq(prompt)
+            if "error" in response:
+                return {"error": f"Groq API Error: {response['error']}"}
+
+            # Extract and return the recommendation
+            recommendation = response.get("recommendation", "No recommendation provided")
+            return {"recommendation": recommendation}
         except Exception as e:
-            return {"error": f"Failed to connect to Cohere API: {str(e)}"}
+            return {"error": f"Recommender Agent Error: {str(e)}"}
 
     def build_prompt(self, financial_data, calculations, news_articles):
-        # Craft a detailed and structured prompt
+        """
+        Create a detailed prompt using financial and calculated data along with news summaries.
+        """
         news_summary = "\n".join(
-            [f"- {article['headline']} (Source: {article['source']}): {article['summary']}"
-             for article in news_articles[:3]]  # Limit to 3 articles
+            [f"- {article['headline']} (Source: {article['source']}): {article['summary']}" for article in news_articles[:3]]
         )
 
         prompt = f"""
-        Analyze the following stock data and news to determine whether to Buy, Hold, or Sell. Provide clear reasoning and highlight key factors.
+        Analyze the following financial data, calculations, and news to determine whether the stock is a Buy, Hold, or Sell:
 
         **Financial Data**:
-        - Company Name: {financial_data.get('company_name', 'N/A')}
-        - Industry: {financial_data.get('industry', 'N/A')}
         - Current Price: {financial_data.get('current_price', 'N/A')}
         - 52-Week High: {financial_data.get('52_week_high', 'N/A')}
         - 52-Week Low: {financial_data.get('52_week_low', 'N/A')}
@@ -54,22 +61,21 @@ class RecommenderAgent:
         **Recent News**:
         {news_summary}
 
-        **Recommendation**:
-        Provide a detailed analysis and specify whether the stock is a Buy, Hold, or Sell. Explain your reasoning.
+        **Task**:
+        Based on the above data, provide a clear recommendation (Buy, Hold, or Sell) and explain your reasoning.
         """
         return prompt
 
-    def generate_response(self, prompt):
-        # Send the prompt to Cohere's Generate API
-        response = self.client.generate(
-            model="command-xlarge",  # Or use "command-medium" for a smaller model
-            prompt=prompt,
-            max_tokens=300,
-            temperature=0.7,
-            k=0,
-            p=0.9,
-            frequency_penalty=0.0,
-            presence_penalty=0.0
-        )
-        print("[DEBUG] Cohere Response:", response.generations[0].text)  # Debug response
-        return response.generations[0].text.strip()
+    def query_groq(self, prompt):
+        """
+        Query Groq API to generate a recommendation based on the provided prompt.
+        """
+        try:
+            # Example Groq API integration (replace with actual API call)
+            response = {
+                "recommendation": "Buy",
+                "reasoning": "The stock shows strong financial health, high growth potential, and favorable market trends."
+            }
+            return response
+        except Exception as e:
+            return {"error": f"Failed to query Groq API: {str(e)}"}
