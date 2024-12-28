@@ -1,5 +1,6 @@
 from crewai.agent import Agent
 import requests
+import os
 
 NGROK_URL = os.getenv("LOCAL_NGROK_URL")
 
