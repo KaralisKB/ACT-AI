@@ -37,8 +37,16 @@ def analyze():
         if "error" in researcher_result:
             return jsonify({"error": f"Researcher Agent Error: {researcher_result['error']}"}), 500
 
+        # Fix missing or invalid fields before sending to Accountant
+        financial_data = researcher_result.get("financial_data", {})
+        financial_data["dividend_yield"] = (
+            financial_data.get("dividend_yield") 
+            if financial_data.get("dividend_yield") not in [None, "N/A"] 
+            else 0.0  # Default to 0.0 if missing or invalid
+        )
+
         # Step 2: Use the Accountant Agent
-        accountant_result = accountant_agent.handle_task({"financial_data": researcher_result["financial_data"]})
+        accountant_result = accountant_agent.handle_task({"financial_data": financial_data})
         if "error" in accountant_result:
             return jsonify({"error": f"Accountant Agent Error: {accountant_result['error']}"}), 500
 
@@ -48,19 +56,29 @@ def analyze():
             return jsonify({"error": f"Recommender Agent Error: {recommender_result['error']}"}), 500
 
         # Step 4: Use the Blogger Agent
-        blogger_result = blogger_agent.handle_task(recommender_result)
+        blogger_result = blogger_agent.handle_task({
+            "recommendation": recommender_result.get("recommendation"),
+            "rationale": recommender_result.get("rationale")
+        })
+
         if "error" in blogger_result:
             return jsonify({"error": f"Blogger Agent Error: {blogger_result['error']}"}), 500
 
-        # Return only the recommendation and reasoning
-        final_result = {
-            "recommendation": blogger_result.get("recommendation", "No recommendation provided"),
-            "reasoning": blogger_result.get("reasoning", "No reasoning provided")
+        # Updated key for Blogger Agent's output
+        blog_summary = blogger_result.get("blog_post", "No blog post generated.")
+
+        # Combine and send the final response
+        combined_result = {
+            "researcher_data": researcher_result,
+            "accountant_analysis": accountant_result,
+            "recommendation": recommender_result.get("recommendation", "No recommendation provided"),
+            "blog_post": blog_summary  # Updated key for Blogger's summary
         }
 
-        return jsonify(final_result)
+        return jsonify(combined_result)
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 
 
 if __name__ == "__main__":
