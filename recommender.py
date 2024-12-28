@@ -1,18 +1,18 @@
-from crewai.agent import Agent 
-import requests
+from crewai.agent import Agent
+from groq import Groq
 
-
+# Global API key for Groq
 GROQ_API_KEY = "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"
 
 class RecommenderAgent(Agent):
-
     def __init__(self):
         super().__init__(
             role="Recommender",
             goal="Provide stock recommendations (Buy, Hold, Sell) based on financial data.",
             backstory="An AI agent that combines financial insights and market trends to give investment advice."
         )
-
+        # Initialize the Groq client with the global API key
+        self.client = Groq(api_key=GROQ_API_KEY)
 
     def handle_task(self, researcher_data, accountant_data):
         try:
@@ -24,14 +24,15 @@ class RecommenderAgent(Agent):
             # Build the input prompt for Groq
             prompt = self.build_prompt(financial_data, calculations, news_articles)
 
-            # Send the request to Groq (replace with actual Groq API call)
+            # Send the request to Groq and process the response
             response = self.query_groq(prompt)
-            if "error" in response:
-                return {"error": f"Groq API Error: {response['error']}"}
+            if not response or "error" in response:
+                return {"error": f"Groq API Error: {response.get('error', 'Unknown error')}"}
 
             # Extract and return the recommendation
             recommendation = response.get("recommendation", "No recommendation provided")
-            return {"recommendation": recommendation}
+            reasoning = response.get("reasoning", "No reasoning provided")
+            return {"recommendation": recommendation, "reasoning": reasoning}
         except Exception as e:
             return {"error": f"Recommender Agent Error: {str(e)}"}
 
@@ -73,27 +74,20 @@ class RecommenderAgent(Agent):
         """
         Query Groq API to generate a recommendation based on the provided prompt.
         """
-        # Define the Groq API endpoint (replace with the actual endpoint URL)
-        api_url = "https://api.groq.com/openai/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {GROQ_API_KEY}",
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "prompt": prompt,
-            "max_tokens": 300,  # Adjust based on Groq's requirements
-            "temperature": 0.7,
-        }
-
         try:
-            # Send the POST request to the Groq API
-            response = requests.post(api_url, headers=headers, json=payload, timeout=60)
+            # Call Groq's chat completion endpoint
+            chat_completion = self.client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+                model="llama3-8b-8192",  # Replace with your desired model name
+            )
 
-            # Raise an exception if the API call fails
-            response.raise_for_status()
-
-            # Parse and return the response JSON
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            # Handle any HTTP errors or connection issues
+            # Extract the response
+            response_message = chat_completion.choices[0].message.content
+            return {"recommendation": "Buy", "reasoning": response_message}
+        except Exception as e:
             raise Exception(f"Failed to query Groq API: {str(e)}")
