@@ -41,15 +41,23 @@ class RecommenderAgent(Agent):
             if not response or "error" in response:
                 return {"error": f"Groq API Error: {response.get('error', 'Unknown error')}"}
 
-            # Ensure the recommendation and reasoning are present and consistent
+            # Ensure the recommendation and reasoning are consistent
             recommendation = response.get("recommendation", "").strip()
-            rationale = response.get("reasoning", "").strip()
+            reasoning = response.get("reasoning", "").strip()
 
-            if not recommendation or not rationale:
+            if not recommendation or not reasoning:
                 return {"error": "Missing recommendation or reasoning in Groq response."}
 
-            # Return only the relevant details
-            return {"recommendation": recommendation, "rationale": rationale}
+            # Validate the recommendation and reasoning alignment
+            if "hold" in reasoning.lower() and recommendation.lower() != "hold":
+                recommendation = "Hold"
+            elif "buy" in reasoning.lower() and recommendation.lower() != "buy":
+                recommendation = "Buy"
+            elif "sell" in reasoning.lower() and recommendation.lower() != "sell":
+                recommendation = "Sell"
+
+            # Return consistent results
+            return {"recommendation": recommendation, "rationale": reasoning}
         except Exception as e:
             return {"error": f"Recommender Agent Error: {str(e)}"}
 
