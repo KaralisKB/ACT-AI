@@ -1,8 +1,8 @@
 from flask import Flask, jsonify, request
 from researcher import ResearcherAgent
 from recommender import RecommenderAgent
-from crew_accountant import CrewAIAccountantAgent
-from crew_blogger import CrewAIBloggerAgent
+from accountant import CrewAIAccountantAgent
+from blogger import CrewAIBloggerAgent
 import os
 
 app = Flask(__name__)
@@ -10,8 +10,9 @@ app = Flask(__name__)
 # Initialize agents
 researcher_agent = ResearcherAgent()
 recommender_agent = RecommenderAgent()
-accountant_agent = CrewAIAccountantAgent(accountant_url=os.getenv("ACCOUNTANT_NGROK_URL"))
-blogger_agent = CrewAIBloggerAgent()
+ngrok_url = os.getenv("LOCAL_NGROK_URL")  # Shared ngrok URL for local models
+accountant_agent = CrewAIAccountantAgent(ngrok_url)
+blogger_agent = CrewAIBloggerAgent(ngrok_url)
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -48,7 +49,7 @@ def analyze():
         if "error" in blogger_result:
             return jsonify({"error": f"Blogger Agent Error: {blogger_result['error']}"}), 500
 
-        # Combine and send response
+        # Combine and send the final response
         combined_result = {
             "researcher_data": researcher_result,
             "accountant_analysis": accountant_result,
