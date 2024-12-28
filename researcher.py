@@ -137,12 +137,18 @@ class ResearcherAgent(Agent):
             """
 
             # Call OpenAI's GPT
-            response = openai.Completion.create(
-                engine="gpt-4",
-                prompt=prompt,
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",  # Or use "gpt-3.5-turbo" for reduced cost
+                messages=[
+                    {"role": "system", "content": "You are a financial analyst providing stock insights."},
+                    {"role": "user", "content": prompt}
+                ],
                 max_tokens=300,
                 temperature=0.7
             )
-            return response.choices[0].text.strip()
+
+            # Extract the response message
+            return response['choices'][0]['message']['content'].strip()
+
         except Exception as e:
             raise Exception(f"Failed to analyze with OpenAI: {str(e)}")
