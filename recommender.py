@@ -6,7 +6,7 @@ GROQ_API_KEY = "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"
 
 class RecommenderAgent(Agent):
     class Config:
-        arbitrary_types_allowed = True  # Allow arbitrary types like `Groq`
+        arbitrary_types_allowed = True  # Allow arbitrary types like Groq
 
     def __init__(self):
         super().__init__(
@@ -14,8 +14,7 @@ class RecommenderAgent(Agent):
             goal="Provide stock recommendations (Buy, Hold, Sell) based on financial data.",
             backstory="An AI agent that combines financial insights and market trends to give investment advice."
         )
-        # Initialize the Groq client
-        self.client = Groq(api_key=GROQ_API_KEY)
+        object.__setattr__(self, 'client', Groq(api_key=GROQ_API_KEY))  # Explicitly set client bypassing Pydantic
 
     def handle_task(self, researcher_data, accountant_data):
         try:
