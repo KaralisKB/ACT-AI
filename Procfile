@@ -1,1 +1,1 @@
-web: gunicorn app:app --timeout 240 --workers 4 --worker-class uvicorn.workers.UvicornWorker
+web: gunicorn app:app --worker-class gthread --threads 2 --timeout 300
