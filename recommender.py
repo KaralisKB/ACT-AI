@@ -20,8 +20,8 @@ class RecommenderAgent(Agent):
             backstory="An AI agent that combines financial insights and market trends to give investment advice."
         )
         try:
-            object.__setattr__(self, 'client', Groq(api_key=GROQ_API_KEY))  # Explicitly set client bypassing Pydantic
-            logger.debug("Groq client initialized successfully.")
+            object.__setattr__(self, 'client', Groq(api_key=GROQ_API_KEY))  # Explicitly bypass Pydantic
+            logger.debug(f"Groq client initialized with API key: {GROQ_API_KEY[:6]}******")
         except Exception as e:
             logger.error(f"Failed to initialize Groq client: {str(e)}")
             raise
@@ -39,22 +39,19 @@ class RecommenderAgent(Agent):
             # Send the request to Groq and process the response
             response = self.query_groq(prompt)
             if not response or "recommendation" not in response or "reasoning" not in response:
+                logger.error("Invalid response from Groq: Missing recommendation or reasoning.")
                 return {"error": "Groq API Error: Missing recommendation or reasoning in response."}
 
             # Extract and return the recommendation
             recommendation = response["recommendation"]
             rationale = response["reasoning"]
-
-            # Ensure both fields are passed to the Blogger Agent
+            logger.debug(f"Groq recommendation: {recommendation}, Rationale: {rationale}")
             return {"recommendation": recommendation, "rationale": rationale}
         except Exception as e:
+            logger.error(f"Recommender Agent Error: {str(e)}")
             return {"error": f"Recommender Agent Error: {str(e)}"}
 
-
     def build_prompt(self, financial_data, calculations, news_articles):
-        """
-        Create a detailed prompt using financial and calculated data along with news summaries.
-        """
         try:
             news_summary = "\n".join(
                 [f"- {article['headline']} (Source: {article['source']}): {article['summary']}" for article in news_articles[:3]]
@@ -84,6 +81,7 @@ class RecommenderAgent(Agent):
             **Task**:
             Based on the above data, provide a clear recommendation (Buy, Hold, or Sell) and explain your reasoning.
             """
+            logger.debug(f"Built prompt: {prompt[:500]}...")  # Log first 500 chars of prompt
             return prompt
         except Exception as e:
             logger.error(f"Error building prompt: {str(e)}")
@@ -91,14 +89,14 @@ class RecommenderAgent(Agent):
 
     def query_groq(self, prompt):
         try:
-            logging.debug("Sending request to Groq API.")
+            logger.debug("Sending request to Groq API.")
             chat_completion = self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
                 model="llama3-8b-8192",
             )
-            logging.debug(f"Groq API response: {chat_completion}")
+            logger.debug(f"Groq API response: {chat_completion}")
             response_message = chat_completion.choices[0].message.content
             return {"recommendation": "Buy", "reasoning": response_message}
         except Exception as e:
-            logging.error(f"Failed to query Groq API: {str(e)}")
-            return {"error": f"Failed to query Groq API: {str(e)}"}
+            logger.error(f"Failed to query Groq API: {str(e)}")
+            raise
