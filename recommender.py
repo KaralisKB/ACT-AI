@@ -97,7 +97,7 @@ class RecommenderAgent(Agent):
             logger.error(f"Error building prompt: {str(e)}")
             raise
 
-    def query_groq(self, prompt, temperature=1.4):
+    def query_groq(self, prompt, temperature=1.6):
         """
         Queries the Groq API to get a recommendation.
 
