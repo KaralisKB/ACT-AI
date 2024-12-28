@@ -13,21 +13,19 @@ class CrewAIBloggerAgent(Agent):
             backstory="A content creation AI agent designed to summarize recommendations in a reader-friendly format."
         )
 
-    def handle_task(self, task_input):
-        recommendation = task_input.get("recommendation", "")
-        rationale = task_input.get("rationale", "")
-        if not recommendation or not rationale:
-            return {"error": "Both recommendation and rationale are required."}
-
+    def handle_task(self, recommender_result):
         try:
-            # Send data to the locally hosted Blogger API
-            response = requests.post(
-                f"{NGROK_URL}/blogger",
-                json={"recommendation": recommendation, "rationale": rationale},
-                timeout=60
-            )
-            if response.status_code != 200:
-                return {"error": f"Blogger API Error: {response.text}"}
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            return {"error": f"Failed to connect to Blogger API: {str(e)}"}
+            recommendation = recommender_result.get("recommendation", None)
+            rationale = recommender_result.get("rationale", None)
+
+            # Validate inputs
+            if not recommendation or not rationale:
+                raise ValueError("Both recommendation and rationale are required.")
+
+            # Build a concise summary
+            summary = f"The recommendation is to **{recommendation}**. This is because: {rationale}"
+
+            # Return the summarized blog post
+            return {"blog_post": summary}
+        except Exception as e:
+            return {"error": f"Blogger Agent Error: {str(e)}"}
