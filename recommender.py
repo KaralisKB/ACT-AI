@@ -5,13 +5,15 @@ from groq import Groq
 GROQ_API_KEY = "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"
 
 class RecommenderAgent(Agent):
+    client: Groq  # Declare the `client` attribute
+
     def __init__(self):
         super().__init__(
             role="Recommender",
             goal="Provide stock recommendations (Buy, Hold, Sell) based on financial data.",
             backstory="An AI agent that combines financial insights and market trends to give investment advice."
         )
-        # Initialize the Groq client with the global API key
+        # Initialize the Groq client
         self.client = Groq(api_key=GROQ_API_KEY)
 
     def handle_task(self, researcher_data, accountant_data):
