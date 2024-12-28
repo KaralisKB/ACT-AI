@@ -23,7 +23,7 @@ class CrewAIAccountantAgent(Agent):
             response = requests.post(
                 f"{NGROK_URL}/accountant",
                 json={"financial_data": financial_data},
-                timeout=30
+                timeout=60
             )
             if response.status_code != 200:
                 return {"error": f"Accountant API Error: {response.text}"}

@@ -24,7 +24,7 @@ class CrewAIBloggerAgent(Agent):
             response = requests.post(
                 f"{NGROK_URL}/blogger",
                 json={"recommendation": recommendation, "rationale": rationale},
-                timeout=30
+                timeout=60
             )
             if response.status_code != 200:
                 return {"error": f"Blogger API Error: {response.text}"}

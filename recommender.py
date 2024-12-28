@@ -87,7 +87,7 @@ class RecommenderAgent(Agent):
 
         try:
             # Send the POST request to the Groq API
-            response = requests.post(api_url, headers=headers, json=payload, timeout=30)
+            response = requests.post(api_url, headers=headers, json=payload, timeout=60)
 
             # Raise an exception if the API call fails
             response.raise_for_status()
