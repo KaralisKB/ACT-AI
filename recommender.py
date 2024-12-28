@@ -7,11 +7,13 @@ class RecommenderAgent(Agent):
             goal="Provide stock recommendations (Buy, Hold, Sell) based on financial data.",
             backstory="An AI agent that combines financial insights and market trends to give investment advice."
         )
-        # Store the hardcoded API key in a private attribute
-        self._groq_api_key = "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"
+        groq_api_key = "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"
 
-        if not self._groq_api_key:
+        if not groq_api_key:
             raise ValueError("GROQ_API_KEY is missing or invalid.")
+
+        # Assign the key to a variable inside the class for later use
+        self.groq_api_key = groq_api_key
 
     def handle_task(self, researcher_data, accountant_data):
         try:
