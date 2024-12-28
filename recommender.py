@@ -1,15 +1,17 @@
-import os
 from crewai.agent import Agent
+import os
 
 class RecommenderAgent(Agent):
     def __init__(self):
         super().__init__(
             role="Recommender",
-            goal="Analyze data and provide a Buy, Hold, or Sell recommendation.",
-            backstory="An AI agent designed to analyze financial and market data to assist investors in decision-making."
+            goal="Provide stock recommendations (Buy, Hold, Sell) based on financial data.",
+            backstory="An AI agent that combines financial insights and market trends to give investment advice."
         )
-        # Initialize Groq API (replace with actual initialization if applicable)
+        # Initialize the Groq API key
         self.groq_api_key = os.getenv("GROQ_API_KEY")
+        if not self.groq_api_key:
+            raise ValueError("GROQ_API_KEY is not set in the environment variables.")
 
     def handle_task(self, researcher_data, accountant_data):
         try:
