@@ -37,16 +37,8 @@ def analyze():
         if "error" in researcher_result:
             return jsonify({"error": f"Researcher Agent Error: {researcher_result['error']}"}), 500
 
-        # Fix missing or invalid fields before sending to Accountant
-        financial_data = researcher_result.get("financial_data", {})
-        financial_data["dividend_yield"] = (
-            financial_data.get("dividend_yield") 
-            if financial_data.get("dividend_yield") not in [None, "N/A"] 
-            else 0.0  # Default to 0.0 if missing or invalid
-        )
-
         # Step 2: Use the Accountant Agent
-        accountant_result = accountant_agent.handle_task({"financial_data": financial_data})
+        accountant_result = accountant_agent.handle_task({"financial_data": researcher_result["financial_data"]})
         if "error" in accountant_result:
             return jsonify({"error": f"Accountant Agent Error: {accountant_result['error']}"}), 500
 
@@ -64,20 +56,16 @@ def analyze():
         if "error" in blogger_result:
             return jsonify({"error": f"Blogger Agent Error: {blogger_result['error']}"}), 500
 
-        # Updated key for Blogger Agent's output
-        blog_summary = blogger_result.get("blog_post", "No blog post generated.")
-
-        # Combine and send the final response
-        combined_result = {
-            "researcher_data": researcher_result,
-            "accountant_analysis": accountant_result,
+        # Final Response: Only Blogger's Recommendation and Reasoning
+        response = {
             "recommendation": recommender_result.get("recommendation", "No recommendation provided"),
-            "blog_post": blog_summary  # Updated key for Blogger's summary
+            "reasoning": recommender_result.get("rationale", "No reasoning provided")
         }
 
-        return jsonify(combined_result)
+        return jsonify(response)
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 
 
 
