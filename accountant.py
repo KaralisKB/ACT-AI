@@ -21,7 +21,7 @@ class CrewAIAccountantAgent(Agent):
         try:
             # Send data to the locally hosted Accountant API
             response = requests.post(
-                f"{ngrok_url}/accountant",
+                f"{NGROK_URL}/accountant",
                 json={"financial_data": financial_data},
                 timeout=30
             )

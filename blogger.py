@@ -1,14 +1,16 @@
 from crewai.agent import Agent
 import requests
 
+NGROK_URL = os.getenv("LOCAL_NGROK_URL")
+
+
 class CrewAIBloggerAgent(Agent):
-    def __init__(self, ngrok_url):
+    def __init__(self):
         super().__init__(
             role="Blogger",
             goal="Generate concise and engaging summaries of recommendations.",
             backstory="A content creation AI agent designed to summarize recommendations in a reader-friendly format."
         )
-        self.ngrok_url = ngrok_url
 
     def handle_task(self, task_input):
         recommendation = task_input.get("recommendation", "")
@@ -19,7 +21,7 @@ class CrewAIBloggerAgent(Agent):
         try:
             # Send data to the locally hosted Blogger API
             response = requests.post(
-                f"{self.ngrok_url}/blogger",
+                f"{NGROK_URL}/blogger",
                 json={"recommendation": recommendation, "rationale": rationale},
                 timeout=30
             )

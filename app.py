@@ -11,8 +11,8 @@ app = Flask(__name__)
 researcher_agent = ResearcherAgent()
 recommender_agent = RecommenderAgent()
 ngrok_url = os.getenv("LOCAL_NGROK_URL")  # Shared ngrok URL for local models
-accountant_agent = CrewAIAccountantAgent(ngrok_url)
-blogger_agent = CrewAIBloggerAgent(ngrok_url)
+accountant_agent = CrewAIAccountantAgent()
+blogger_agent = CrewAIBloggerAgent()
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
