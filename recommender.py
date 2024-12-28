@@ -97,12 +97,23 @@ class RecommenderAgent(Agent):
             logger.error(f"Error building prompt: {str(e)}")
             raise
 
-    def query_groq(self, prompt):
+    def query_groq(self, prompt, temperature=1.4):
+        """
+        Queries the Groq API to get a recommendation.
+
+        Args:
+            prompt (str): The input prompt for the model.
+            temperature (float): Sampling temperature, between 0 and 2. Higher values increase randomness.
+
+        Returns:
+            dict: The response containing recommendation and reasoning or an error.
+        """
         try:
             logger.debug("Sending request to Groq API.")
             chat_completion = self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
                 model="llama3-8b-8192",
+                temperature=temperature  # Add temperature parameter
             )
             logger.debug(f"Groq API response: {chat_completion}")
             response_message = chat_completion.choices[0].message.content
@@ -110,3 +121,4 @@ class RecommenderAgent(Agent):
         except Exception as e:
             logger.error(f"Failed to query Groq API: {str(e)}")
             raise
+
