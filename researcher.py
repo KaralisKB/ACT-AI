@@ -138,7 +138,7 @@ class ResearcherAgent(Agent):
 
             # Call OpenAI's GPT
             response = openai.Completion.create(
-                engine="text-davinci-003",
+                engine="gpt-4",
                 prompt=prompt,
                 max_tokens=300,
                 temperature=0.7
