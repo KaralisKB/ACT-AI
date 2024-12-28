@@ -5,7 +5,8 @@ from groq import Groq
 GROQ_API_KEY = "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"
 
 class RecommenderAgent(Agent):
-    client: Groq  # Declare the `client` attribute
+    class Config:
+        arbitrary_types_allowed = True  # Allow arbitrary types like `Groq`
 
     def __init__(self):
         super().__init__(
