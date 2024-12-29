@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from researcher import ResearcherAgent
 from recommender import RecommenderAgent
 from accountant import CrewAIAccountantAgent
@@ -7,11 +8,14 @@ import os
 import time
 import logging
 
+
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+CORS(app)
 
 # Initialize agents
 researcher_agent = ResearcherAgent()
